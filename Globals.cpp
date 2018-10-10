@@ -33,6 +33,8 @@ int nbwpstmp = 0;
 double wpslat[MAX_NB_WP];
 double wpslong[MAX_NB_WP];
 int nbWPs = 0, CurWP = 0;
+double cap = 0.0;
+
 
 // Measurements.
 interval x_gps(-MAX_UNCERTAINTY, MAX_UNCERTAINTY), y_gps(-MAX_UNCERTAINTY, MAX_UNCERTAINTY), z_gps(-MAX_UNCERTAINTY, MAX_UNCERTAINTY);
@@ -321,6 +323,9 @@ double lightPixRatio_ball = 0;
 int bAcoustic_ball = 0;
 int bDepth_ball = 0;
 int camdir_ball = 0;
+double objDistance = 0;
+bool flag = FALSE;
+double objDistance_ball = 0;
 int bBrake_ball = 0;
 int procid_ball = 0;
 int videoid_ball = 0; 

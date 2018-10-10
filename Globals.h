@@ -180,8 +180,8 @@ enum STATE
 {
 	INVALID_STATE = -1,
 	DIRECT_TRAJECTORY, // Suivi direct.
-	STARBOARD_TACK_TRAJECTORY, // Bateau au près avec vent de tribord.
-	PORT_TACK_TRAJECTORY // Bateau au près avec vent de babord.
+	STARBOARD_TACK_TRAJECTORY, // Bateau au prï¿½s avec vent de tribord.
+	PORT_TACK_TRAJECTORY // Bateau au prï¿½s avec vent de babord.
 };
 typedef enum STATE STATE;
 
@@ -215,6 +215,7 @@ extern int nbwpstmp;
 extern double wpslat[MAX_NB_WP];
 extern double wpslong[MAX_NB_WP];
 extern int nbWPs, CurWP;
+extern double cap;
 
 // Measurements.
 extern interval x_gps, y_gps, z_gps;
@@ -508,6 +509,9 @@ extern int camdir_ball;
 extern int bBrake_ball;
 extern int procid_ball;
 extern int videoid_ball;
+extern bool flag;
+extern double objDistance ;
+extern double objDistance_ball;
 extern double u_ball;
 extern double x_ball, y_ball, z_ball;
 extern double psi_ball; // Not used...

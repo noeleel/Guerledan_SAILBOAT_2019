@@ -1,0 +1,46 @@
+% camid (0..9) or a video filename or IP address and TCP port
+0
+%udp://10.5.5.9:8554
+%test1.wmv
+%dummy_25min.wmv
+%dummy_120min.wmv
+%127.0.0.1:4014
+%192.168.1.150:4014
+%rtsp://192.168.1.254/sjcam.mp4
+% videoimgwidth
+320
+% videoimgheight
+240
+% captureperiod (in ms)
+100
+% timeout for remote mode (in ms)
+5
+% bForceSoftwareResize
+1
+% hcenter
+0
+% vcenter
+0
+% hscale
+1
+% vscale
+1
+% rotation angle (in deg)
+0
+% hshift
+0
+% vshift
+0
+% bFlip
+0
+% HorizontalBeam (in ]0..360] deg)
+70
+% VerticalBeam (in ]0..360] deg)
+50
+% nb_excluded_area_points
+0
+%3
+% excluded_area_points
+%0 240
+%320 240
+%160 120

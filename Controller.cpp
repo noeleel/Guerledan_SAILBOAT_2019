@@ -9,6 +9,113 @@
 
 #include "Controller.h"
 
+
+bool vent_favorable(double cap) {
+	double psiw = Center(psitwindhat); // variable psi dans le code python
+	if (abs(fmod((psiw - M_PI - cap), (2 * M_PI))) <= M_PI / 4.0)
+	{
+		return FALSE;
+	}
+	else
+	{
+		return TRUE;
+	}
+}
+
+double commande_voile = 0.0;
+double commande_gouvernail = 0.0;
+
+void navigation_cap_favorable(double theta, double cap) {
+	double deltar = 0.0;
+	if (!vent_favorable(cap))
+	{
+		fprintf(stderr, "erreur nav cap favorable #########################");
+		return;
+	}
+	double psiw = Center(psitwindhat); // variable psi dans le code python
+	if (cos(theta - cap)>=0)
+	{
+		deltar = sin(theta - cap);
+	}
+	else
+	{
+		deltar = sign(sin(theta - cap),0.0);
+	}
+
+	double deltasmax = M_PI / 4.0 * (cos(psiw - theta) + 1);
+	commande_gouvernail = -deltar;
+	commande_voile = deltasmax;
+	fprintf(stderr, "%f commande voile\n", commande_voile);
+	fprintf(stderr, "%f commande gouvernail\n", commande_gouvernail);
+	return;
+}
+
+
+bool cap_correct(double theta, double cap, double tolerance = M_PI/12.0) {
+	double psiw = Center(psitwindhat); // variable psi dans le code python
+	if (abs(cap - theta) <= tolerance)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+double angle_critique = M_PI/3.0;
+
+void navigation_cap(double theta, double cap, double temps_sequence=100) {
+	static int counter = -1;
+	//fprintf(stderr, "temps seq: %i\n", counter);
+	double psiw = Center(psitwindhat); // variable psi dans le code python
+	double alpha = 2.5;
+	double temps_gauche = temps_sequence*(1.0+(fmod(psiw-M_PI-cap,2.0*M_PI)/M_PI*4.0/alpha))/2.0;
+	if (vent_favorable(cap))
+	{
+		fprintf(stderr, "if \n\n");
+
+		navigation_cap_favorable(theta, cap);
+	}
+	else
+	{
+		if ((counter <= temps_gauche) || (counter >= temps_sequence))
+		{
+			if (counter > temps_sequence)
+			{
+				counter = 0;
+			}
+			double cap1 = M_PI + psiw - angle_critique;
+			if (!cap_correct(theta,cap1))
+			{
+				navigation_cap_favorable(theta,cap1);
+			}
+			else
+			{
+				counter++;
+				navigation_cap_favorable(theta, cap1);
+			}
+		}
+		else
+		{
+			double cap2 = M_PI + psiw + angle_critique;
+			if (!cap_correct(theta,cap2))
+			{
+				navigation_cap_favorable(theta, cap2);
+			}
+			else
+			{
+				counter++;
+				navigation_cap_favorable(theta, cap2);
+			}
+		}
+	}
+}
+
+// int var1 = 0;
+
+
+
 THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 {
 	CHRONO chrono;
@@ -127,7 +234,7 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 
 			xte = e; // XTE as in GPS...
 
-			wpsi = phi-(2.0*gamma_infinite/M_PI)*atan2(e,radius); // theta_star
+			wpsi = LineFollowing(phi, e, gamma_infinite, radius); // theta*
 
 #pragma region Sailboat supervisor
 			if (robid & SAILBOAT_CLASS_ROBID_MASK) 
@@ -162,12 +269,12 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 							if ((state == PORT_TACK_TRAJECTORY)&&(e > -radius/2.0))
 							{
 								if (bStdOutDetailedInfo) printf("Port tack trajectory.\n");
-								state = PORT_TACK_TRAJECTORY; // Bateau au pr�s avec vent de babord.
+								state = PORT_TACK_TRAJECTORY; // Bateau au près avec vent de babord.
 							}
 							else
 							{
 								if (bStdOutDetailedInfo) printf("Starboard tack trajectory.\n");
-								state = STARBOARD_TACK_TRAJECTORY; // Bateau au pr�s avec vent de tribord.
+								state = STARBOARD_TACK_TRAJECTORY; // Bateau au près avec vent de tribord.
 							}
 						}
 						else
@@ -175,12 +282,12 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 							if ((state == STARBOARD_TACK_TRAJECTORY)&&(e < radius/2.0))
 							{
 								if (bStdOutDetailedInfo) printf("Starboard tack trajectory.\n");
-								state = STARBOARD_TACK_TRAJECTORY; // Bateau au pr�s avec vent de tribord.
+								state = STARBOARD_TACK_TRAJECTORY; // Bateau au près avec vent de tribord.
 							}
 							else
 							{
 								if (bStdOutDetailedInfo) printf("Port tack trajectory.\n");
-								state = PORT_TACK_TRAJECTORY; // Bateau au pr�s avec vent de babord.
+								state = PORT_TACK_TRAJECTORY; // Bateau au près avec vent de babord.
 							}
 						}
 					}
@@ -199,15 +306,15 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 				switch (state)
 				{
 				case STARBOARD_TACK_TRAJECTORY:
-					wpsi = psiw+M_PI+ksi; // Heading command. (thetabar)
+					wpsi = psiw+M_PI+ksi; // Heading command. thetabar
 					deltasmax = 0; // Sail command.
 					break;
 				case PORT_TACK_TRAJECTORY:
-					wpsi = psiw+M_PI-ksi; // Heading command. (thetabar)
+					wpsi = psiw+M_PI-ksi; // Heading command. thetabar
 					deltasmax = 0; // Sail command.
 					break;
 				default: // DIRECT_TRAJECTORY
-					//wpsi = wpsi; // Heading command. (thetabar)
+					//wpsi = wpsi; // Heading command. thetabar
 #ifndef ALT_SAILBOAT_CONTROLLER
 					deltasmax = q1*pow((cos(psiw-wpsi)+1.0)/2.0,q2); // Sail command.
 #else
@@ -221,7 +328,7 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 					StopChronoQuick(&chrono_sail_update);
 					bForceSailUpdate = 0;
 					if (bStdOutDetailedInfo) printf("Sail update.\n");
-					u = deltasmax/q1;
+					u = deltasmax/q1;//ouverture de voile (entre 0 et 1)
 					StartChrono(&chrono_sail_update);
 				}			
 			}
@@ -262,7 +369,7 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 		{
 			if (wpsi != wpsi_prev) ipsi = 0;
 
-			delta_angle = Center(psihat)-wpsi;
+			delta_angle = Center(psihat)-wpsi;// centre(psihat) = cap entre -pi et pi ? 
 
 			if (cos(delta_angle) > cosdelta_angle_threshold)
 			{
@@ -330,7 +437,7 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 			ipsi = 0;
 		}
 		
-
+		// modif u et uw commande ouverture voile et rotation (omega) [0 neutre, 1 vers axe y, -1 vers axe -y
 		if (bPitchControl)
 		{
 			if (wtheta != wtheta_prev) itheta = 0;
@@ -400,56 +507,68 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 		{
 			iz = 0;
 		}
-		
-		if (detectratio_ball >= objMinDetectionRatio_ball) printf("Ball found\n"); else printf("Ball not found\n");
-		// if (bBallFound == TRUE)
-		// {
-		// 	if (objDistance_ball >= objDistance_ball_seuil )
-		// 	{
-		// 		wpsi = wpsi + PI;
-		// 	}
-		// }
-		
-		/*
-			Ball detection
-		bBallFound
-		objDistance_ball
-		wpsi_ball
-		x_ball, y_ball, z_ball
-		*/
-		// Beginning Jaulin controller
-		if (norm_ba != 0)
-			e = ((wxb-wxa)*(Center(yhat)-wya)-(wyb-wya)*(Center(xhat)-wxa))/(norm_ba);
+
+		/// mon code ici
+		///
+		///
+
+
+		// BALL DETECTION
+	
+		//fprintf(stderr, "%d\n", vent_favorable(0.0));
+		if (detectratio_ball >= objMinDetectionRatio_ball && flag == FALSE) {
+			bBallFound = TRUE;
+			// printf("Ball found");
+			flag = TRUE;
+			wxa = Center(xhat);
+			wxb = x_ball;
+			wya = Center(yhat);
+			wyb = y_ball;
+			norm_ba =  sqrt(pow(wxb-wxa,2)+pow(wyb-wya,2));
+			if (norm_ba != 0)
+				e = ((wxb-wxa)*(Center(yhat)-wya)-(wyb-wya)*(Center(xhat)-wxa))/(norm_ba);
+			else 
+				e = 0;
+			phi = atan2(wyb-wya,wxb-wxa);
+			// Compute wpsi thanks to the distance to the ball
+			wpsi = phi-(2.0*gamma_infinite/M_PI)*atan2(e,radius); // theta_star
+		}
 		else 
-			e = 0;
+			bBallFound = FALSE;
+			// printf("Ball not found");
 
-		if (fabs(e) > radius/2.0)
-			q = sign(e, 0);
-			
-		phi = atan2(wyb-wya,wxb-wxa);
+		if(bBallFound == TRUE)
+		{
+			if (norm_ba != 0)
+				e = ((wxb-wxa)*(Center(yhat)-wya)-(wyb-wya)*(Center(xhat)-wxa))/(norm_ba);
+			else 
+				e = 0;
+			wpsi = phi-(2.0*gamma_infinite/M_PI)*atan2(e,radius); 
 
-		wpsi = phi-(2.0*gamma_infinite/M_PI)*atan2(e,radius); // theta_star
+		}
+		// END BALL DETECTION PART
+	
 
-		if ((cos(Center(psitwindhat)-wpsi)+cos(ksi) < 0)||
-						((cos(Center(psitwindhat)-phi)+cos(ksi) < 0)&&(fabs(e) < radius)))
-							wpsi = M_PI + Center(psitwindhat) - q*ksi;
+		double theta = Center(psihat);
+		//double cap_voulu = -M_PI / 2.0;
+		// fprintf(stderr, "%f theta \n", theta);
+		// fprintf(stderr, "%f cap voulu \n", cap);
 
-		if (cos(Center(psihat) - wpsi) >=0)
-			uw = uw_max * sin(Center(psihat) - wpsi);
-		else
-			uw = uw_max * sign(sin(Center(psihat) - wpsi));
-
-		u = (M_PI/4.0)*(cos(Center(psitwindhat) - wpsi) + 1) - M_PI/2.0 - M_PI/4.0;
-		printf('%s','Sail command');
-		printf('%f', u);
-		printf('%s','Rudder command');
-		printf('%f', uw);
-		// Jaulin Controller
+		navigation_cap(theta, wpsi);
+	// fprintf(stderr, "%f theta \n", theta);
 
 
-		u = (u > u_max)? u_max: u; // Sail control
-		u = (u < -u_max)? -u_max: u; 
-		uw = (uw > uw_max)? uw_max: uw; // Rudder control 
+		u = commande_voile;
+		uw = commande_gouvernail;
+
+
+		fprintf(stderr, "%f commande gouvernail \n", commande_gouvernail);
+		fprintf(stderr, "%f uw \n", uw);
+
+
+		u = (u > u_max)? u_max: u; // commande voile
+		u = (u < -u_max)? -u_max: u; // commande gouvernail
+		uw = (uw > uw_max)? uw_max: uw;
 		uw = (uw < -uw_max)? -uw_max: uw;
 		ul = (ul > 1)? 1: ul;
 		ul = (ul < -1)? -1: ul;
@@ -514,6 +633,7 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 			u3 = uv;
 			break;
 		}
+
 #pragma region Saturation
 		u1 = (u1<1)?u1:1;
 		u1 = (u1>-1)?u1:-1;
