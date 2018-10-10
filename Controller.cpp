@@ -136,6 +136,14 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 	int days = 0, hours = 0, minutes = 0, seconds = 0;
 	double deccsec = 0;
 	double latitude = 0, longitude = 0, altitude = 0;
+	
+	bool tour = false;
+	int tour_comp = 0;
+	bool timer = true;
+	clock_t startTime;
+	clock_t endTime;
+	clock_t clockTicksTaken;
+	double timeInSeconds;
 
 #pragma region lognav
 	char lognavfilename[MAX_BUF_LEN];
@@ -508,17 +516,16 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 			iz = 0;
 		}
 
-		/// mon code ici
-		///
-		///
-
 
 		// BALL DETECTION
 	
 		//fprintf(stderr, "%d\n", vent_favorable(0.0));
 		if (detectratio_ball >= objMinDetectionRatio_ball && flag == FALSE) {
 			bBallFound = TRUE;
-			// printf("Ball found");
+			// 	printf("Ball found\n"); 
+			// 	// printf("%f,%f,%f\n", x_ball,y_ball,z_ball );
+			// 	printf("%f\n",objDistance_ball);
+			// 	// printf("%f\n",wpsi_ball);
 			flag = TRUE;
 			wxa = Center(xhat);
 			wxb = x_ball;
@@ -536,6 +543,57 @@ THREAD_PROC_RETURN_VALUE ControllerThread(void* pParam)
 		else 
 			bBallFound = FALSE;
 			// printf("Ball not found");
+
+		// detection de ball
+		if (tour  == true)
+		{
+			if (timer == true)
+			{
+				startTime = clock();
+				timer = false;
+			}
+			endTime = clock();
+			clockTicksTaken = endTime - startTime;
+			timeInSeconds = (clockTicksTaken / (double) CLOCKS_PER_SEC);
+			// printf("%f\n",timeInSeconds);
+			if (timeInSeconds >= 2)
+			{
+				wpsi = wpsi + M_PI/2;
+
+				startTime = clock();
+				tour_comp = tour_comp + 1;
+				printf("1/4 tour numero %d\n",tour_comp);
+				timer == true;
+			}
+			else 
+			{
+				wpsi = wpsi;
+			}
+			if (tour_comp ==4)
+			{
+				tour = false;
+				tour_comp = 0;
+			}
+		}
+		else
+		{
+			if (detectratio_ball >= objMinDetectionRatio_ball) 
+			{
+				if (objDistance_ball >= 1)
+				{	
+					printf("Ball found\n"); 
+					wpsi = wpsi - M_PI/4;
+					tour = true;
+					tour_comp = tour_comp + 1;
+					printf("1/4 tour numero %d\n",tour_comp);
+				}
+			}
+			else 
+			{
+				printf("Ball not found\n");
+				wpsi = phi-(2.0*gamma_infinite/M_PI)*atan2(e,radius);
+			}
+		}
 
 		if(bBallFound == TRUE)
 		{
