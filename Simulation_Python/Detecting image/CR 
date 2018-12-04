@@ -1,0 +1,34 @@
+
+Semaine du 8 au 12 octobre à Guerlédan:
+
+Cette semaine à Guerlédan fut principalement consacrée aux expérimentations de tout bord. Le premier jour fut l'occasion de prendre en main le navire, d'abord, en mode télécommandé, car les trois d'entre nous, n'étant pas voileux, n'avaient pas suffisamment d'expériences sur les voiles afin de savoir comment diriger un voilier. Puis, par la suite, nous avons utilisé le programme initial de M. Le Bars (sans aucune modification dans un premier temps) afin d'appréhender la manière dont le voilier se comporte face au vent, avec un vent de bord ou avec un vent arrière. 
+
+Suite à cette première phase de test, nous avons téléversé notre version du programme, c'est-à-dire, avec une légère modification au niveau du contrôleur, afin que le bateau sache louvoyer face au vent. Cet essai fut heureusement concluant, ce qui nous a permis d'avancer grandement sur le projet et sur les expérimentations.
+
+A savoir que la semaine précédente, nous avions consacré notre temps libre à prendre en main & à comprendre le code, notamment avec des réunions de travail régulières avec M. Le Bars, ainsi qu'à modifier le code du contrôleur ( Controller.cpp) afin que le voilier puisse louvoyer face au vent. Pour ce faire, nous avons choisi la manière de procéder suivante : d'abord, nous réalisons notre code sous Python afin de valider le modèle physique et algorithmique que nous avons choisi, puis, par la suite, nous l'adaptions en C++. Ceci nous permet de gagner un temps important sur l'écriture du code (en raison du caractère moins abstrait de Python). 
+
+Durant les jours suivants, nous avons tenté le suivi de cap à partir de la détection de bouées. Cependant, la bouée étant bien trop petite (Cf recommandations), la détection de bouées initiale n'a pas fonctionné et le robot détectait uniquement les reflets du soleil sur la berge. Afin de pallier ce problème et sur conseils des encadrants, j'ai fait le choix de modifier l'algorithme de détection d'images ( Ball.cpp) et d'utiliser un code déjà présent dans le Bundle du contrôleur, reposant sur la Transformée de Hough. J'ai utilisé la transformée de Hough de deux manières différents ( transformée en cercle (afin de détecter la balle) & transformée en lignes ( afin de détecter la ligne d'horizon, car nous sommes partis du postulat que lorsque le bateau se trouvait à une certaine distance de la balle, celle-ci est en-deçà de la ligne d'horizon alors que lorsque le bateau était en dessous de cette distance, elle est au-dessus de la ligne d'horizon). Ceci permettra aussi de régler tout problème de reflet. N'ayant pas pu finir le code à temps à Guerlédan, j'ai donc terminé le code à l'école. 
+
+Le restant du temps, nous avons principalement consacré notre temps à faire naviguer le voilier, notamment, face au vent, afin de récupérer le maximum de logs, ce qui nous sera utile pour la partie concernant la navigation sans GPS & sans capteur de vent, que nous n'avons pas du tout traité durant notre séjour à Guerlédan. 
+
+
+
+Pour l'avenir :
+- Prédiction de séries temporelles
+- Fin de la détection d'images
+- Théories des graphes pour la recherche de bouées. 
+
+
+Recommandations:
+- Ballon de baudruche + bouée pour une meilleure détection d'images (à acheter) de préférence mate (sans reflet, car lorsque la balle est exposée au soleil, elle est majoritairement de couleur blanche et non orange!).
+- Voir si la détection en HSL est la plus judicieuse : se pencher du côté de HSV. 
+
+Bibliographie :
+[ Afin de réaliser le contrôleur, nous avons suivi les publications de M. Jaulin:
+ de la WRSC 2018 : https://www.ensta-bretagne.fr/jaulin/paper_jaulin_irsc12.pdf
+ de RobMooc	 : https://www.ensta-bretagne.fr/jaulin/robmooc.html]
+[ Pour la détection de balle (= cercle) & la détection de la ligne d'horizon :
+  Utilisation de la transformée de Hough : http://www.f-legrand.fr/scidoc/docimg/image/extraction/hough/hough.html ]
+
+
+
