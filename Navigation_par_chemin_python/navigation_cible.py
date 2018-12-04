@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from roblib import *
 from numpy.linalg import det,norm
 import numpy as np 
@@ -202,8 +204,6 @@ if __name__ == "__main__":
     
     
 
-    
-    
     
     cap = 0
     for t in arange(0,150,dt):
